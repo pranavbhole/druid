@@ -182,7 +182,7 @@
         </dependency>
         <dependency>
             <groupId>org.jdbi</groupId>
-            <artifactId>jdbi</artifactId>
+            <artifactId>jdbi3-core</artifactId>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>

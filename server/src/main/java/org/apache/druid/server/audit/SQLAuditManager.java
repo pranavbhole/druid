@@ -38,11 +38,6 @@ import org.apache.druid.metadata.MetadataStorageTablesConfig;
 import org.apache.druid.metadata.SQLMetadataConnector;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
-import org.skife.jdbi.v2.Handle;
-import org.skife.jdbi.v2.IDBI;
-import org.skife.jdbi.v2.Query;
-import org.skife.jdbi.v2.Update;
-import org.skife.jdbi.v2.tweak.HandleCallback;
 
 import java.io.IOException;
 import java.util.List;

@@ -20,8 +20,8 @@
 package org.apache.druid.audit;
 
 import org.apache.druid.common.config.ConfigSerde;
+import org.jdbi.v3.core.Handle;
 import org.joda.time.Interval;
-import org.skife.jdbi.v2.Handle;
 
 import java.util.List;
 

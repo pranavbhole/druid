@@ -259,7 +259,7 @@
     </dependency>
     <dependency>
       <groupId>org.jdbi</groupId>
-      <artifactId>jdbi</artifactId>
+      <artifactId>jdbi3-core</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
