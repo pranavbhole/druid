@@ -214,6 +214,10 @@ const Dendrogram = (props: DendrogramProps) => {
         formatter: (params: any) => {
           const { data } = params;
           return `<pre style="font-size: 10px">${JSONBig.stringify(
+            data?.metrics,
+            undefined,
+            2,
+          )} ${JSONBig.stringify(
             data?.debugInfo,
             undefined,
             2,
