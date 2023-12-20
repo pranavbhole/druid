@@ -44,7 +44,6 @@ import org.apache.druid.sql.SqlLifecycleManager;
 import org.apache.druid.sql.SqlLifecycleManager.Cancelable;
 import org.apache.druid.sql.SqlRowTransformer;
 import org.apache.druid.sql.SqlStatementFactory;
-import org.eclipse.jetty.http.HttpFields;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
@@ -65,7 +64,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Path("/druid/v2/sql/")
@@ -264,62 +262,87 @@ public class SqlResource
         @Override
         public Writer makeWriter(OutputStream out) throws IOException
         {
-          ResultFormat.Writer writer = sqlQuery.getResultFormat().createFormatter(out, jsonMapper);
-          final SqlRowTransformer rowTransformer = thePlan.createRowTransformer();
-
-          return new Writer()
-          {
-
-            @Override
-            public void writeResponseStart() throws IOException
+          if (sqlQuery.queryContext().isAnalyze()) {
+            final com.fasterxml.jackson.databind.ObjectWriter writer = jsonMapper.writer();
+            return new Writer()
             {
-              writer.writeResponseStart();
-
-              if (sqlQuery.includeHeader()) {
-                writer.writeHeader(
-                    rowTransformer.getRowType(),
-                    sqlQuery.includeTypesHeader(),
-                    sqlQuery.includeSqlTypesHeader()
-                );
+              @Override
+              public void writeResponseStart() throws IOException
+              {
+                // do nothing
               }
-            }
 
-            @Override
-            public void writeRow(Object obj) throws IOException
-            {
-              Object[] row = (Object[]) obj;
-
-              writer.writeRowStart();
-              for (int i = 0; i < rowTransformer.getFieldList().size(); i++) {
-                final Object value = rowTransformer.transform(row, i);
-                writer.writeRowField(rowTransformer.getFieldList().get(i), value);
+              @Override
+              public void writeRow(Object obj) throws IOException
+              {
+                // do nothing
               }
-              writer.writeRowEnd();
-            }
 
-            @Override
-            public void writeResponseEnd() throws IOException
+              @Override
+              public void writeResponseEnd() throws IOException
+              {
+                final QueryRuntimeAnalysis analysis = queryResponse.getResponseContext().getRuntimeAnalysis();
+                if (analysis != null) {
+                  // build our own query/time for this guy, the real one happens after the stream is closed
+                  final long queryTimeNs = System.nanoTime() - getStartNs();
+                  analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));
+                }
+                writer.writeValue(out, analysis);
+              }
+
+              @Override
+              public void close()
+              {
+                // do nothing
+              }
+            };
+          } else {
+            ResultFormat.Writer writer = sqlQuery.getResultFormat().createFormatter(out, jsonMapper);
+            final SqlRowTransformer rowTransformer = thePlan.createRowTransformer();
+
+            return new Writer()
             {
-              if (sqlQuery.queryContext().isAnalyze()) {
-                log.info("writing end");
+
+              @Override
+              public void writeResponseStart() throws IOException
+              {
+                writer.writeResponseStart();
+
+                if (sqlQuery.includeHeader()) {
+                  writer.writeHeader(
+                      rowTransformer.getRowType(),
+                      sqlQuery.includeTypesHeader(),
+                      sqlQuery.includeSqlTypesHeader()
+                  );
+                }
+              }
+
+              @Override
+              public void writeRow(Object obj) throws IOException
+              {
+                Object[] row = (Object[]) obj;
+
                 writer.writeRowStart();
-                final QueryRuntimeAnalysis analysis = (QueryRuntimeAnalysis) queryResponse.getResponseContext().getQueryMetrics();
-                // build our own query/time for this guy, the real one happens after the stream is closed
-                final long queryTimeNs = System.nanoTime() - getStartNs();
-                analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));
-                String runtimeAnalysis = jsonMapper.writeValueAsString(analysis);
-                writer.writeRowField("analysis", runtimeAnalysis);
+                for (int i = 0; i < rowTransformer.getFieldList().size(); i++) {
+                  final Object value = rowTransformer.transform(row, i);
+                  writer.writeRowField(rowTransformer.getFieldList().get(i), value);
+                }
                 writer.writeRowEnd();
               }
-              writer.writeResponseEnd();
-            }
 
-            @Override
-            public void close() throws IOException
-            {
-              writer.close();
-            }
-          };
+              @Override
+              public void writeResponseEnd() throws IOException
+              {
+                writer.writeResponseEnd();
+              }
+
+              @Override
+              public void close() throws IOException
+              {
+                writer.close();
+              }
+            };
+          }
         }
 
         @Override
@@ -360,6 +383,12 @@ public class SqlResource
         ex = serverConfig.getErrorResponseTransformStrategy().transformIfNeeded((SanitizableException) ex);
       }
       out.write(jsonMapper.writeValueAsBytes(ex));
+    }
+
+    @Override
+    public boolean useTrailers()
+    {
+      return false;
     }
   }
 }

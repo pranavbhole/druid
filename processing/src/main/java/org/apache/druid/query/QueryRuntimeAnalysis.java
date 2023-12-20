@@ -25,6 +25,7 @@ public class QueryRuntimeAnalysis<QueryType extends Query<?>, V extends QueryMet
   protected V delegate;
   protected ConcurrentMap<String, Object> debugInfo;
   protected ConcurrentMap<String, Number> metrics;
+  protected ConcurrentMap<String, Map<String, Number>> segmentMetrics;
   protected ConcurrentLinkedQueue<QueryRuntimeAnalysis> children;
 
   public QueryRuntimeAnalysis(V delegate)
@@ -32,6 +33,7 @@ public class QueryRuntimeAnalysis<QueryType extends Query<?>, V extends QueryMet
     this.delegate = delegate;
     this.debugInfo = new ConcurrentHashMap<>();
     this.metrics = new ConcurrentHashMap<>();
+    this.segmentMetrics = new ConcurrentHashMap<>();
     this.children = new ConcurrentLinkedQueue<>();
   }
 
@@ -39,12 +41,14 @@ public class QueryRuntimeAnalysis<QueryType extends Query<?>, V extends QueryMet
   public QueryRuntimeAnalysis(
       @JsonProperty("debugInfo") Map<String, Object> debugInfo,
       @JsonProperty("metrics") Map<String, Number> metrics,
+      @JsonProperty("segmentMetrics") Map<String, Map<String, Number>> segmentMetrics,
       @JsonProperty("children") List<QueryRuntimeAnalysis> children
   )
   {
     this.delegate = null;
     this.debugInfo = new ConcurrentHashMap<>(debugInfo);
     this.metrics = new ConcurrentHashMap<>(metrics);
+    this.segmentMetrics = new ConcurrentHashMap<>(segmentMetrics);
     this.children = new ConcurrentLinkedQueue<>(children);
   }
 
@@ -445,6 +449,12 @@ public class QueryRuntimeAnalysis<QueryType extends Query<?>, V extends QueryMet
   public Map<String, Number> getMetrics()
   {
     return metrics;
+  }
+
+  @JsonProperty
+  public Map<String, Map<String, Number>> getSegmentMetrics()
+  {
+    return segmentMetrics;
   }
 
   @JsonProperty

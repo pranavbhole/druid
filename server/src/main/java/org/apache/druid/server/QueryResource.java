@@ -43,6 +43,7 @@ import org.apache.druid.query.Query;
 import org.apache.druid.query.QueryContexts;
 import org.apache.druid.query.QueryException;
 import org.apache.druid.query.QueryInterruptedException;
+import org.apache.druid.query.QueryRuntimeAnalysis;
 import org.apache.druid.query.QueryToolChest;
 import org.apache.druid.query.context.ResponseContext;
 import org.apache.druid.query.context.ResponseContext.Keys;
@@ -74,6 +75,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @LazySingleton
@@ -533,33 +535,66 @@ public class QueryResource implements QueryCountStatsProvider
         {
           final ObjectWriter objectWriter = queryLifecycle.newOutputWriter(io);
           final SequenceWriter sequenceWriter = objectWriter.writeValuesAsArray(out);
-          return new Writer()
-          {
-
-            @Override
-            public void writeResponseStart()
+          if (queryLifecycle.getQuery().context().isAnalyze() && !useTrailers()) {
+            return new Writer()
             {
-              // Do nothing
-            }
+              @Override
+              public void writeResponseStart()
+              {
+                // do nothing
+              }
 
-            @Override
-            public void writeRow(Object obj) throws IOException
-            {
-              sequenceWriter.write(obj);
-            }
+              @Override
+              public void writeRow(Object obj)
+              {
+                // do nothing
+              }
 
-            @Override
-            public void writeResponseEnd()
-            {
-              // Do nothing
-            }
+              @Override
+              public void writeResponseEnd() throws IOException
+              {
+                final QueryRuntimeAnalysis analysis = queryResponse.getResponseContext().getRuntimeAnalysis();
+                // build our own query/time for this guy, the real one happens after the stream is closed
+                final long queryTimeNs = System.nanoTime() - getStartNs();
+                analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));
+                objectWriter.writeValue(out, analysis);
+              }
 
-            @Override
-            public void close() throws IOException
+              @Override
+              public void close()
+              {
+                // do nothing
+              }
+            };
+          } else {
+            return new Writer()
             {
-              sequenceWriter.close();
-            }
-          };
+
+              @Override
+              public void writeResponseStart()
+              {
+                // Do nothing
+              }
+
+              @Override
+              public void writeRow(Object obj) throws IOException
+              {
+                sequenceWriter.write(obj);
+              }
+
+              @Override
+              public void writeResponseEnd()
+              {
+                // Do nothing
+              }
+
+              @Override
+              public void close() throws IOException
+              {
+                sequenceWriter.close();
+              }
+            };
+          }
         }
 
         @Override
@@ -593,6 +628,12 @@ public class QueryResource implements QueryCountStatsProvider
     {
       final ObjectWriter objectWriter = queryLifecycle.newOutputWriter(io);
       out.write(objectWriter.writeValueAsBytes(e));
+    }
+
+    @Override
+    public boolean useTrailers()
+    {
+      return !(QueryResource.this instanceof BrokerQueryResource);
     }
   }
 }
