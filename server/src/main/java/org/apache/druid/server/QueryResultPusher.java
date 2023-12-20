@@ -116,6 +116,8 @@ public abstract class QueryResultPusher
 
   public abstract void writeException(Exception e, OutputStream out) throws IOException;
 
+  public abstract boolean useTrailers();
+
   /**
    * Pushes results out.  Can sometimes return a JAXRS Response object instead of actually pushing to the output
    * stream, primarily for error handling that occurs before switching the servlet to asynchronous mode.
@@ -161,7 +163,9 @@ public abstract class QueryResultPusher
       accumulator.flush();
 
       counter.incrementSuccess();
-      setTrailers(queryResponse);
+      if (useTrailers()) {
+        setTrailers(queryResponse);
+      }
       accumulator.close();
       resultsWriter.recordSuccess(accumulator.getNumBytesSent());
     }
@@ -224,9 +228,7 @@ public abstract class QueryResultPusher
       response.setTrailers(() -> {
         HttpFields fields = new HttpFields();
         try {
-          final QueryRuntimeAnalysis analysis;
-
-          analysis = (QueryRuntimeAnalysis) queryResponse.getResponseContext().getQueryMetrics();
+          final QueryRuntimeAnalysis analysis = (QueryRuntimeAnalysis) queryResponse.getResponseContext().getQueryMetrics();
           // build our own query/time for this guy, the real one happens after the stream is closed
           final long queryTimeNs = System.nanoTime() - getStartNs();
           analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));
