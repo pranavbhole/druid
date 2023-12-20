@@ -82,53 +82,19 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
         query: wrapInExplainIfNeeded(queryString),
         context,
       };
+      const response = await fetch("/druid/v2/sql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
+      });
 
-      // let result: any[];
-      // try {
-      //   console.log(engine);
-      //   result =await queryDruidSql(payload);
-      // } catch (e) {
-      //   throw new Error(getDruidErrorMessage(e));
-      //  }
-      //  console.log(result);
-      try {
-        const response = await fetch('/druid/v2/sql', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Network response was not ok, status: ${response.status}`);
-        }
-
-        // Assuming that the response body is text
-        const responseBody = await response.text();
-        // console.log('Response body:', responseBody);
-        const responseArr = JSON.parse(responseBody);
-        console.log(responseArr);
-        // read to end of the response and fetch analysis key, TODO: fix unsafe gets
-        const dagString = responseArr[responseArr?.length - 1]['analysis'];
-        console.log(JSONBig.parse(`[${dagString}]`));
-        try {
-          return JSONBig.parse(`[${dagString}]`);
-        } catch (e) {
-          console.error(e);
-          return {};
-        }
-        // Check if the trailers are supported
-        // if ('trailers' in response) {
-        //   // Access the trailers if available
-        //   const trailers = await response.trailers;
-        //   console.log('Trailers:', trailers);
-        // } else {
-        //   console.warn('Trailers are not supported by this browser or server.');
-        // }
-      } catch (error) {
-        console.error('Fetch error:', error);
+      if (!response.ok) {
+        throw new Error(`Network response was not ok, status: ${response.status}`);
       }
+      const responseBody = await response.json();
+      return [responseBody];
     },
     initQuery: queryWithContext,
   });
