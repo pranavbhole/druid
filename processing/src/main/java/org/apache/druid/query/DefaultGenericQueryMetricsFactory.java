@@ -41,11 +41,13 @@ public class DefaultGenericQueryMetricsFactory implements GenericQueryMetricsFac
   @Override
   public QueryMetrics<Query<?>> makeMetrics(Query<?> query)
   {
-    DefaultQueryMetrics<Query<?>> queryMetrics = new DefaultQueryMetrics<>();
-    queryMetrics.query(query);
+    final QueryMetrics<Query<?>> queryMetrics;
     if (query.context().isAnalyze()) {
-      return new DefaultGenericQueryRuntimeAnalysis<>(queryMetrics);
+      queryMetrics = new DefaultGenericQueryRuntimeAnalysis<>(new DefaultQueryMetrics<>());
+    } else {
+      queryMetrics = new DefaultQueryMetrics<>();
     }
+    queryMetrics.query(query);
     return queryMetrics;
   }
 

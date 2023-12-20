@@ -53,7 +53,7 @@ public class TestInsertQueryMaker implements QueryMaker
     Hook.QUERY_PLAN.run(druidQuery.getQuery());
 
     // 2) Return the dataSource and signature of the insert operation, so tests can confirm they are correct.
-    return QueryResponse.withEmptyContextAndDebugInfo(
+    return QueryResponse.withEmptyContext(
         Sequences.simple(ImmutableList.of(new Object[]{targetDataSource, signature}))
     );
   }
