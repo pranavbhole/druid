@@ -49,6 +49,7 @@ public class ObjectWriter implements ResultFormat.Writer
 
     // Disable automatic JSON termination, so clients can detect truncated responses.
     jsonGenerator.configure(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, false);
+    jsonGenerator.configure(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false);
   }
 
   @Override

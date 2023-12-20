@@ -155,27 +155,7 @@ public abstract class QueryResultPusher
       accumulator.flush();
 
       counter.incrementSuccess();
-      if (queryResponse.getResponseContext().getQueryMetrics() instanceof QueryRuntimeAnalysis) {
-        response.setTrailers(() -> {
-          HttpFields fields = new HttpFields();
-          try {
-            final QueryRuntimeAnalysis analysis;
-
-            analysis = (QueryRuntimeAnalysis) queryResponse.getResponseContext().getQueryMetrics();
-            // build our own query/time for this guy, the real one happens after the stream is closed
-            final long queryTimeNs = System.nanoTime() - getStartNs();
-            analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));
-            String runtimeAnalysis = jsonMapper.writeValueAsString(analysis);
-            HttpField runtimeAnalysisField = new HttpField("X-Druid-Query-Runtime-Analysis", runtimeAnalysis);
-            fields.add(runtimeAnalysisField);
-          }
-          catch (JsonProcessingException e) {
-            log.warn(e, "Unable to serialize query runtime analysis for query [%s]", queryId);
-          }
-
-          return fields;
-        });
-      }
+      setTrailers(queryResponse);
       accumulator.close();
       resultsWriter.recordSuccess(accumulator.getNumBytesSent());
     }
@@ -230,6 +210,31 @@ public abstract class QueryResultPusher
       }
     }
     return null;
+  }
+
+  protected void setTrailers(QueryResponse<?> queryResponse)
+  {
+    if (queryResponse.getResponseContext().getQueryMetrics() instanceof QueryRuntimeAnalysis) {
+      response.setTrailers(() -> {
+        HttpFields fields = new HttpFields();
+        try {
+          final QueryRuntimeAnalysis analysis;
+
+          analysis = (QueryRuntimeAnalysis) queryResponse.getResponseContext().getQueryMetrics();
+          // build our own query/time for this guy, the real one happens after the stream is closed
+          final long queryTimeNs = System.nanoTime() - getStartNs();
+          analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));
+          String runtimeAnalysis = jsonMapper.writeValueAsString(analysis);
+          HttpField runtimeAnalysisField = new HttpField("X-Druid-Query-Runtime-Analysis", runtimeAnalysis);
+          fields.add(runtimeAnalysisField);
+        }
+        catch (JsonProcessingException e) {
+          log.warn(e, "Unable to serialize query runtime analysis for query [%s]", queryId);
+        }
+
+        return fields;
+      });
+    }
   }
 
   @Nullable

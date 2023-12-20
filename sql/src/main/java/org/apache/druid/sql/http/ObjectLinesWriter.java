@@ -42,6 +42,7 @@ public class ObjectLinesWriter implements ResultFormat.Writer
     this.outputStream = outputStream;
     this.jsonGenerator = jsonMapper.writer().getFactory().createGenerator(outputStream);
     jsonGenerator.setRootValueSeparator(new SerializedString("\n"));
+    jsonGenerator.configure(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false);
   }
 
   @Override

@@ -726,10 +726,7 @@ public class CachingClusteredClient implements QuerySegmentWalker
               Queries.withSpecificSegments(queryPlus.getQuery(), segmentsOfServer)
           ).withMaxQueuedBytes(maxQueuedBytesPerServer),
           responseContext
-      ).withBaggage(() -> {
-
-        System.out.println(responseContext.getQueryMetrics().toString());
-      });
+      );
     }
 
     private Sequence<T> getAndCacheServerResults(
