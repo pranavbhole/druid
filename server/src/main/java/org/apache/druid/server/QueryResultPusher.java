@@ -70,7 +70,9 @@ public abstract class QueryResultPusher
 
   private StreamingHttpResponseAccumulator accumulator;
   private AsyncContext asyncContext;
-  private org.eclipse.jetty.server.Response response;
+  protected org.eclipse.jetty.server.Response response;
+
+  protected String runtimeAnalysis;
 
   public QueryResultPusher(
       HttpServletRequest request,
@@ -107,6 +109,10 @@ public abstract class QueryResultPusher
   public abstract ResultsWriter start();
 
   public abstract long getStartNs();
+
+  public String getRuntimeAnalysis() {
+    return runtimeAnalysis;
+  }
 
   public abstract void writeException(Exception e, OutputStream out) throws IOException;
 
@@ -225,6 +231,8 @@ public abstract class QueryResultPusher
           final long queryTimeNs = System.nanoTime() - getStartNs();
           analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));
           String runtimeAnalysis = jsonMapper.writeValueAsString(analysis);
+          this.runtimeAnalysis= runtimeAnalysis;
+          response.setHeader("Trailer","X-Druid-Query-Runtime-Analysis");
           HttpField runtimeAnalysisField = new HttpField("X-Druid-Query-Runtime-Analysis", runtimeAnalysis);
           fields.add(runtimeAnalysisField);
         }

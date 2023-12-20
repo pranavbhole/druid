@@ -34,7 +34,7 @@ export class Api {
       resp => resp,
       (error: AxiosError) => {
         const responseData = error.response?.data;
-        const message = responseData?.message;
+        const message = error?.message;
         if (nonEmptyString(message)) {
           return Promise.reject(new Error(message));
         }

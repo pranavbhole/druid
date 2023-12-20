@@ -27,6 +27,7 @@ import org.apache.druid.guice.annotations.NativeQuery;
 import org.apache.druid.guice.annotations.Self;
 import org.apache.druid.java.util.common.StringUtils;
 import org.apache.druid.java.util.common.logger.Logger;
+import org.apache.druid.query.QueryRuntimeAnalysis;
 import org.apache.druid.server.DruidNode;
 import org.apache.druid.server.QueryResource;
 import org.apache.druid.server.QueryResponse;
@@ -43,6 +44,7 @@ import org.apache.druid.sql.SqlLifecycleManager;
 import org.apache.druid.sql.SqlLifecycleManager.Cancelable;
 import org.apache.druid.sql.SqlRowTransformer;
 import org.apache.druid.sql.SqlStatementFactory;
+import org.eclipse.jetty.http.HttpFields;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
@@ -62,6 +64,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Path("/druid/v2/sql/")
@@ -296,6 +300,17 @@ public class SqlResource
             @Override
             public void writeResponseEnd() throws IOException
             {
+              if (sqlQuery.queryContext().isAnalyze()) {
+                log.info("writing end");
+                writer.writeRowStart();
+                final QueryRuntimeAnalysis analysis = (QueryRuntimeAnalysis) queryResponse.getResponseContext().getQueryMetrics();
+                // build our own query/time for this guy, the real one happens after the stream is closed
+                final long queryTimeNs = System.nanoTime() - getStartNs();
+                analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));
+                String runtimeAnalysis = jsonMapper.writeValueAsString(analysis);
+                writer.writeRowField("analysis", runtimeAnalysis);
+                writer.writeRowEnd();
+              }
               writer.writeResponseEnd();
             }
 
