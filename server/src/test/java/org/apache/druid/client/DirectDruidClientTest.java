@@ -100,13 +100,8 @@ public class DirectDruidClientTest
     client = new DirectDruidClient(
         new ReflectionQueryToolChestWarehouse(),
         QueryRunnerTestHelper.NOOP_QUERYWATCHER,
-<<<<<<< Updated upstream
-        new DefaultObjectMapper(),
-        new DefaultObjectMapper(),
-=======
         TestHelper.makeSmileMapper(),
         TestHelper.makeJsonMapper(),
->>>>>>> Stashed changes
         httpClient,
         "http",
         hostName,
@@ -171,13 +166,8 @@ public class DirectDruidClientTest
     DirectDruidClient client2 = new DirectDruidClient(
         new ReflectionQueryToolChestWarehouse(),
         QueryRunnerTestHelper.NOOP_QUERYWATCHER,
-<<<<<<< Updated upstream
-        new DefaultObjectMapper(),
-        new DefaultObjectMapper(),
-=======
         TestHelper.makeSmileMapper(),
         TestHelper.makeJsonMapper(),
->>>>>>> Stashed changes
         httpClient,
         "http",
         "foo2",
