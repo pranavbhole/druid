@@ -178,6 +178,9 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
   {
     TopNQueryMetrics queryMetrics = queryMetricsFactory.makeMetrics();
     queryMetrics.query(query);
+    if (query.context().isAnalyze()) {
+      return new TopNQueryRuntimeAnalysis(queryMetrics);
+    }
     return queryMetrics;
   }
 

@@ -48,12 +48,10 @@ import org.apache.druid.query.GenericQueryMetricsFactory;
 import org.apache.druid.query.InlineDataSource;
 import org.apache.druid.query.IterableRowsCursorHelper;
 import org.apache.druid.query.Query;
-import org.apache.druid.query.QueryContexts;
 import org.apache.druid.query.QueryMetrics;
 import org.apache.druid.query.QueryRunner;
 import org.apache.druid.query.QueryToolChest;
 import org.apache.druid.query.aggregation.MetricManipulationFn;
-import org.apache.druid.query.groupby.GroupByQueryMetrics;
 import org.apache.druid.segment.Cursor;
 import org.apache.druid.segment.VirtualColumn;
 import org.apache.druid.segment.column.ColumnCapabilities;
@@ -62,7 +60,6 @@ import org.apache.druid.segment.column.RowSignature;
 import org.apache.druid.utils.CloseableUtils;
 
 import javax.annotation.Nullable;
-
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -95,12 +92,6 @@ public class ScanQueryQueryToolChest extends QueryToolChest<ScanResultValue, Sca
     return (queryPlus, responseContext) -> {
       final ScanQuery originalQuery = ((ScanQuery) (queryPlus.getQuery()));
       ScanQuery.verifyOrderByForNativeExecution(originalQuery);
-
-      ScanQueryMetrics queryMetrics = queryMetricsFactory.makeMetrics(originalQuery);
-      if(originalQuery.context().isAnalyze())
-      {
-        responseContext.setQueryMetrics(new ScanQueryRuntimeAnalysis(queryMetrics));
-      }
 
       // Remove "offset" and add it to the "limit" (we won't push the offset down, just apply it here, at the
       // merge at the top of the stack).

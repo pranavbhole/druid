@@ -1,8 +1,6 @@
 package org.apache.druid.query.timeseries;
 
 import org.apache.druid.query.QueryRuntimeAnalysis;
-import org.apache.druid.query.groupby.GroupByQuery;
-import org.apache.druid.query.groupby.GroupByQueryMetrics;
 
 public class TimeseriesQueryRuntimeAnalysis extends QueryRuntimeAnalysis<TimeseriesQuery, TimeseriesQueryMetrics>
     implements TimeseriesQueryMetrics
@@ -15,24 +13,24 @@ public class TimeseriesQueryRuntimeAnalysis extends QueryRuntimeAnalysis<Timeser
   @Override
   public void limit(TimeseriesQuery query)
   {
-
+    delegate.limit(query);
   }
 
   @Override
   public void numMetrics(TimeseriesQuery query)
   {
-
+    delegate.numMetrics(query);
   }
 
   @Override
   public void numComplexMetrics(TimeseriesQuery query)
   {
-
+    delegate.numComplexMetrics(query);
   }
 
   @Override
   public void granularity(TimeseriesQuery query)
   {
-
+    delegate.granularity(query);
   }
 }
