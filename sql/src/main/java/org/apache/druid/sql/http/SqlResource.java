@@ -281,10 +281,12 @@ public class SqlResource
               @Override
               public void writeResponseEnd() throws IOException
               {
-                final QueryRuntimeAnalysis analysis = (QueryRuntimeAnalysis) queryResponse.getResponseContext().getQueryMetrics();
-                // build our own query/time for this guy, the real one happens after the stream is closed
-                final long queryTimeNs = System.nanoTime() - getStartNs();
-                analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));
+                final QueryRuntimeAnalysis analysis = queryResponse.getResponseContext().getRuntimeAnalysis();
+                if (analysis != null) {
+                  // build our own query/time for this guy, the real one happens after the stream is closed
+                  final long queryTimeNs = System.nanoTime() - getStartNs();
+                  analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));
+                }
                 writer.writeValue(out, analysis);
               }
 

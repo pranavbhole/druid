@@ -110,10 +110,6 @@ public abstract class QueryResultPusher
 
   public abstract long getStartNs();
 
-  public String getRuntimeAnalysis() {
-    return runtimeAnalysis;
-  }
-
   public abstract void writeException(Exception e, OutputStream out) throws IOException;
 
   public abstract boolean useTrailers();
@@ -224,11 +220,12 @@ public abstract class QueryResultPusher
 
   protected void setTrailers(QueryResponse<?> queryResponse)
   {
-    if (queryResponse.getResponseContext().getQueryMetrics() instanceof QueryRuntimeAnalysis) {
+    if (queryResponse.getResponseContext().getRuntimeAnalysis() != null) {
       response.setTrailers(() -> {
         HttpFields fields = new HttpFields();
         try {
-          final QueryRuntimeAnalysis analysis = (QueryRuntimeAnalysis) queryResponse.getResponseContext().getQueryMetrics();
+          QueryRuntimeAnalysis analysis = queryResponse.getResponseContext().getRuntimeAnalysis();
+
           // build our own query/time for this guy, the real one happens after the stream is closed
           final long queryTimeNs = System.nanoTime() - getStartNs();
           analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));

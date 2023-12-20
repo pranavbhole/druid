@@ -62,6 +62,11 @@ export const debugData = [
         metrics: {
           'query/cpu/time': 106680,
         },
+        segmentMetrics: {
+          'abcd': {
+            'query/wait/time': 1234
+          }
+        },
         debugInfo: {},
         children: [],
       },

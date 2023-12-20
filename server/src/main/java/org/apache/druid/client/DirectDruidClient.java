@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.fasterxml.jackson.jaxrs.smile.SmileMediaTypes;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -356,12 +357,13 @@ public class DirectDruidClient<T> implements QueryRunner<T>
             HttpChunkTrailer trailer
         )
         {
-          if (trailer != null && context.getQueryMetrics() != null) {
+          if (trailer != null) {
             final String trailerRaw = trailer.trailingHeaders().get("X-Druid-Query-Runtime-Analysis");
             if (trailerRaw != null && queryMetrics instanceof QueryRuntimeAnalysis) {
               try {
                 final QueryRuntimeAnalysis remote = jsonMapper.readValue(trailerRaw, QueryRuntimeAnalysis.class);
-                context.getQueryMetrics().addChildDiagnostic(((QueryRuntimeAnalysis) queryMetrics).merge(remote));
+                final QueryRuntimeAnalysis main = Iterables.getOnlyElement(context.getRuntimeAnalyses());
+                main.addChildDiagnostic(remote);
               }
               catch (JsonProcessingException e) {
                 throw new RuntimeException(e);

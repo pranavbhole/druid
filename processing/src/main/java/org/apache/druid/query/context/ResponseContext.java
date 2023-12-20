@@ -34,7 +34,7 @@ import org.apache.druid.guice.annotations.PublicApi;
 import org.apache.druid.java.util.common.IAE;
 import org.apache.druid.java.util.common.ISE;
 import org.apache.druid.java.util.common.NonnullPair;
-import org.apache.druid.query.QueryMetrics;
+import org.apache.druid.query.QueryRuntimeAnalysis;
 import org.apache.druid.query.SegmentDescriptor;
 import org.apache.druid.utils.CollectionUtils;
 import org.joda.time.Interval;
@@ -42,6 +42,7 @@ import org.joda.time.Interval;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -557,9 +558,36 @@ public abstract class ResponseContext
     }
   }
 
-  private QueryMetrics<?> queryMetrics;
+  private List<QueryRuntimeAnalysis<?, ?>> runtimeAnalyses = new ArrayList<>();
+
 
   protected abstract Map<Key, Object> getDelegate();
+
+  public Collection<QueryRuntimeAnalysis<?, ?>> getRuntimeAnalyses()
+  {
+    return runtimeAnalyses;
+  }
+
+  @Nullable
+  public QueryRuntimeAnalysis<?, ?> getRuntimeAnalysis()
+  {
+    QueryRuntimeAnalysis main = null;
+    List<QueryRuntimeAnalysis> perSegment = new ArrayList<>();
+    for (QueryRuntimeAnalysis analyzeThis : getRuntimeAnalyses()) {
+      if (analyzeThis.getDebugInfo().containsKey("segment")) {
+        perSegment.add(analyzeThis);
+      } else if (main == null) {
+        main = analyzeThis;
+      } else {
+        main = main.merge(analyzeThis);
+      }
+    }
+
+    for (QueryRuntimeAnalysis segment : perSegment) {
+      main.getSegmentMetrics().put(segment.getDebugInfo().get("segment"), segment.getMetrics());
+    }
+    return main;
+  }
 
   public Map<String, Object> toMap()
   {
@@ -765,14 +793,9 @@ public abstract class ResponseContext
     });
   }
 
-  public void setQueryMetrics(QueryMetrics<?> queryMetrics)
+  public void addQueryAnalysis(QueryRuntimeAnalysis<?, ?> analysis)
   {
-    this.queryMetrics = queryMetrics;
-  }
-
-  public QueryMetrics<?> getQueryMetrics()
-  {
-    return queryMetrics;
+    this.runtimeAnalyses.add(analysis);
   }
 
   /**

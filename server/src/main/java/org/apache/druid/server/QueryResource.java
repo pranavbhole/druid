@@ -553,7 +553,7 @@ public class QueryResource implements QueryCountStatsProvider
               @Override
               public void writeResponseEnd() throws IOException
               {
-                final QueryRuntimeAnalysis analysis = (QueryRuntimeAnalysis) queryResponse.getResponseContext().getQueryMetrics();
+                final QueryRuntimeAnalysis analysis = queryResponse.getResponseContext().getRuntimeAnalysis();
                 // build our own query/time for this guy, the real one happens after the stream is closed
                 final long queryTimeNs = System.nanoTime() - getStartNs();
                 analysis.addDiagnosticMeasurement("query/time", TimeUnit.NANOSECONDS.toMillis(queryTimeNs));

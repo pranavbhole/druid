@@ -20,9 +20,12 @@
 package org.apache.druid.query.context;
 
 import org.apache.druid.guice.annotations.PublicApi;
+import org.apache.druid.query.QueryRuntimeAnalysis;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * The implementation of {@link ResponseContext} with a {@link ConcurrentHashMap} as a delegate
@@ -36,10 +39,23 @@ public class ConcurrentResponseContext extends ResponseContext
   }
 
   private final ConcurrentHashMap<Key, Object> delegate = new ConcurrentHashMap<>();
+  private final ConcurrentLinkedQueue<QueryRuntimeAnalysis<?, ?>> delegateAnalyses = new ConcurrentLinkedQueue<>();
 
   @Override
   protected Map<Key, Object> getDelegate()
   {
     return delegate;
+  }
+
+  @Override
+  public Collection<QueryRuntimeAnalysis<?, ?>> getRuntimeAnalyses()
+  {
+    return delegateAnalyses;
+  }
+
+  @Override
+  public void addQueryAnalysis(QueryRuntimeAnalysis<?, ?> analysis)
+  {
+    delegateAnalyses.add(analysis);
   }
 }
