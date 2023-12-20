@@ -109,9 +109,9 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
         console.log(responseArr);
         // read to end of the response and fetch analysis key, TODO: fix unsafe gets
         const dagString = responseArr[responseArr?.length-1]['analysis'];
-        console.log(JSONBig.parse(dagString));
+        console.log(JSONBig.parse('['+dagString+']'));
         try {
-          return JSONBig.parse(dagString);
+          return JSONBig.parse('['+dagString+']');
         } catch (e) {
           console.error(e);
           return {};
