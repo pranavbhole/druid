@@ -26,22 +26,21 @@ import { Loader } from '../../../components';
 import type { DruidEngine, QueryContext, QueryWithContext } from '../../../druid-models';
 import { isEmptyContext } from '../../../druid-models';
 import { useQueryManager } from '../../../hooks';
-// import { Api } from '../../../singletons';
 import type { QueryExplanation } from '../../../utils';
-import { nonEmptyArray } from '../../../utils';
+import { nonEmptyArray} from '../../../utils';
 
-import { debugData } from './debug-data.mock';
+//import { debugData } from './debug-data.mock';
 
 import './explain-and-analyse-dialog.scss';
 
-// function isExplainQuery(query: string): boolean {
-//   return /^\s*EXPLAIN\sAND\sANALYSE\sPLAN\sFOR/im.test(query);
-// }
+function isExplainQuery(query: string): boolean {
+  return /^\s*EXPLAIN\sANALYSE/im.test(query);
+}
 
-// function wrapInExplainIfNeeded(query: string): string {
-//   if (isExplainQuery(query)) return query;
-//   return `EXPLAIN AND ANALYSE PLAN FOR ${query}`;
-// }
+function wrapInExplainIfNeeded(query: string): string {
+  if (isExplainQuery(query)) return query;
+  return `${query}`;
+}
 
 export interface QueryContextEngine extends QueryWithContext {
   engine: DruidEngine;
@@ -62,7 +61,7 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
 
   const [explainState] = useQueryManager<QueryContextEngine, QueryExplanation[] | string>({
     processQuery: async queryWithContext => {
-      const { queryContext, wrapQueryLimit } = queryWithContext;
+      const { queryContext, wrapQueryLimit, queryString } = queryWithContext;
 
       let context: QueryContext | undefined;
       if (!isEmptyContext(queryContext) || wrapQueryLimit || mandatoryQueryContext) {
@@ -70,42 +69,68 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
           ...queryContext,
           ...(mandatoryQueryContext || {}),
           useNativeQueryExplain: true,
+          analyze: true
         };
         if (typeof wrapQueryLimit !== 'undefined') {
           context.sqlOuterLimit = wrapQueryLimit + 1;
         }
       }
 
-      // const payload: any = {
-      //   query: wrapInExplainIfNeeded(queryString),
-      //   context,
-      // };
+      const payload: any = {
+        query: wrapInExplainIfNeeded(queryString),
+        context,
+      };
 
       // let result: any[];
       // try {
-      //   result =
-      //     engine === 'sql-msq-task'
-      //       ? (await Api.instance.post(`/druid/v2/sql/task`, payload)).data
-      //       : await queryDruidSql(payload);
+      //   console.log(engine);
+      //   result =await queryDruidSql(payload);
       // } catch (e) {
       //   throw new Error(getDruidErrorMessage(e));
-      // }
-
-      // const plan = deepGet(result, '0.PLAN');
-      // if (typeof plan !== 'string') {
-      //   throw new Error(`unexpected result from ${engine} API`);
-      // }
-
-      // wait for 5 seconds to simulate loading time
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const stringifiedData = JSONBig.stringify(debugData, undefined, 2);
-
+      //  }
+      //  console.log(result);
       try {
-        return JSONBig.parse(stringifiedData);
-      } catch {
-        return {};
+        const response = await fetch("/druid/v2/sql", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload),
+        });
+    
+        if (!response.ok) {
+          throw new Error(`Network response was not ok, status: ${response.status}`);
+        }
+    
+        // Assuming that the response body is text
+         const responseBody = await response.text();
+        // console.log('Response body:', responseBody);
+        const responseArr = JSON.parse(responseBody);
+        console.log(responseArr);
+        // read to end of the response and fetch analysis key, TODO: fix unsafe gets
+        const dagString = responseArr[responseArr?.length-1]['analysis'];
+        console.log(JSONBig.parse(dagString));
+        try {
+          return JSONBig.parse(dagString);
+        } catch (e) {
+          console.error(e);
+          return {};
+        }
+        // Check if the trailers are supported
+        // if ('trailers' in response) {
+        //   // Access the trailers if available
+        //   const trailers = await response.trailers;
+        //   console.log('Trailers:', trailers);
+        // } else {
+        //   console.warn('Trailers are not supported by this browser or server.');
+        // }
+      } catch (error) {
+        console.error('Fetch error:', error);
       }
+
+      //const stringifiedData = JSONBig.stringify(debugData, undefined, 2);
+
+
     },
     initQuery: queryWithContext,
   });
