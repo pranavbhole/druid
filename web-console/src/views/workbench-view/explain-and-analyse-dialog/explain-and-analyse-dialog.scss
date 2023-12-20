@@ -20,7 +20,7 @@
 
 .explain-and-analyse-dialog {
   &.#{$bp-ns}-dialog {
-    width: 800px;
+    width: 70vw;
     height: 90vh;
   }
 
@@ -38,32 +38,24 @@
 
     .query-explanation {
       position: relative;
-      display: flex;
-      flex-direction: column;
       height: 100%;
+      width: 100%;
 
-      textarea {
-        width: 100%;
-        height: 100%;
-        resize: none;
-      }
-
-      .query-group {
-        flex: 1;
-
-        .#{$bp-ns}-form-content {
-          flex: 1;
-        }
-      }
-
-      .signature-group {
-        margin-bottom: 0;
-      }
-
-      .open-query {
+      .dendrogram {
         position: absolute;
-        top: 6px;
-        right: 6px;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 49%;
+      }
+
+      .item-detail {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: 49%;
+        overflow: auto;
       }
     }
 

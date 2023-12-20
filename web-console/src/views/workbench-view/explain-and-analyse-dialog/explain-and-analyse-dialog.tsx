@@ -16,18 +16,18 @@
  * limitations under the License.
  */
 
-import { Button, Classes, Dialog, Tab, Tabs } from '@blueprintjs/core';
+import { Button, Classes, Dialog } from '@blueprintjs/core';
 import * as echarts from 'echarts';
 import * as JSONBig from 'json-bigint-native';
 import type { JSX } from 'react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { Loader } from '../../../components';
 import type { DruidEngine, QueryContext, QueryWithContext } from '../../../druid-models';
 import { isEmptyContext } from '../../../druid-models';
-import { useQueryManager } from '../../../hooks';
+import { useQueryManager, useResizeObserver } from '../../../hooks';
 import type { QueryExplanation } from '../../../utils';
-import { nonEmptyArray} from '../../../utils';
+import { nonEmptyArray } from '../../../utils';
 
 //import { debugData } from './debug-data.mock';
 
@@ -59,6 +59,8 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
 ) {
   const { queryWithContext, onClose, mandatoryQueryContext } = props;
 
+  const [selectedItem, setSelectedItem] = useState<any>(undefined);
+
   const [explainState] = useQueryManager<QueryContextEngine, QueryExplanation[] | string>({
     processQuery: async queryWithContext => {
       const { queryContext, wrapQueryLimit, queryString } = queryWithContext;
@@ -69,7 +71,7 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
           ...queryContext,
           ...(mandatoryQueryContext || {}),
           useNativeQueryExplain: true,
-          analyze: true
+          analyze: true,
         };
         if (typeof wrapQueryLimit !== 'undefined') {
           context.sqlOuterLimit = wrapQueryLimit + 1;
@@ -90,25 +92,25 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
       //  }
       //  console.log(result);
       try {
-        const response = await fetch("/druid/v2/sql", {
-          method: "POST",
+        const response = await fetch('/druid/v2/sql', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json"
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
         });
-    
+
         if (!response.ok) {
           throw new Error(`Network response was not ok, status: ${response.status}`);
         }
-    
+
         // Assuming that the response body is text
-         const responseBody = await response.text();
+        const responseBody = await response.text();
         // console.log('Response body:', responseBody);
         const responseArr = JSON.parse(responseBody);
         console.log(responseArr);
         // read to end of the response and fetch analysis key, TODO: fix unsafe gets
-        const dagString = responseArr[responseArr?.length-1]['analysis'];
+        const dagString = responseArr[responseArr?.length - 1]['analysis'];
         console.log(JSONBig.parse(`[${dagString}]`));
         try {
           return JSONBig.parse(`[${dagString}]`);
@@ -127,10 +129,6 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
       } catch (error) {
         console.error('Fetch error:', error);
       }
-
-      //const stringifiedData = JSONBig.stringify(debugData, undefined, 2);
-
-
     },
     initQuery: queryWithContext,
   });
@@ -138,14 +136,6 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
   let content: JSX.Element;
 
   const { loading, error: explainError, data: explainResult } = explainState;
-
-  function renderQueryExplanation(data: any) {
-    return (
-      <div className="query-explanation">
-        <Dendrogram data={data} />
-      </div>
-    );
-  }
 
   if (loading) {
     content = <Loader />;
@@ -155,21 +145,18 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
     content = <div />;
   } else if (nonEmptyArray(explainResult)) {
     if (explainResult.length === 1) {
-      content = renderQueryExplanation(explainResult[0]);
-    } else {
       content = (
-        <Tabs animate renderActiveTabPanelOnly vertical>
-          {explainResult.map((queryExplanation, i) => (
-            <Tab
-              id={i}
-              key={i}
-              title={`Query ${i + 1}`}
-              panel={renderQueryExplanation(queryExplanation)}
-            />
-          ))}
-          <Tabs.Expander />
-        </Tabs>
+        <div className="query-explanation">
+          <Dendrogram
+            data={explainResult[0]}
+            onItemClick={item => setSelectedItem(item)}
+            selectedItem={selectedItem}
+          />
+          <ItemDetail item={selectedItem} />
+        </div>
       );
+    } else {
+      content = <div />;
     }
   } else {
     content = <div className="generic-result">{String(explainResult)}</div>;
@@ -187,19 +174,64 @@ export const ExplainAndAnalyseDialog = React.memo(function ExplainAndAnalyseDial
   );
 });
 
+const ItemDetail = (props: any) => {
+  const { item } = props;
+
+  if (!item) return <div className="item-detail" />;
+
+  return (
+    <div className="item-detail">
+      <pre>{JSONBig.stringify(item, undefined, 2)}</pre>
+    </div>
+  );
+};
+
+function augmentData(data: any[], selectedItem?: any) {
+  const result: any[] = [];
+
+  const totalWaitTime = data.reduce((acc, curr) => acc + curr.metrics['query/time'], 0);
+
+  data.forEach((node: any) => {
+    result.push({
+      name: node.debugInfo?.server ?? '',
+      node,
+      itemStyle: {
+        color:
+          // not sure if relying on the server name is a good idea
+          selectedItem && selectedItem.debugInfo?.server === node.debugInfo?.server
+            ? 'red'
+            : 'green',
+      },
+      value: node.metrics['query/time'] / totalWaitTime,
+      tooltip: { metrics: node.metrics, debugInfo: node.debugInfo },
+      children: augmentData(node.children ?? [], selectedItem),
+    });
+  });
+
+  return result;
+}
+
 interface DendrogramProps {
   data: any;
+  onItemClick: (item: any) => void;
+  selectedItem?: any;
 }
 
 const Dendrogram = (props: DendrogramProps) => {
-  const { data } = props;
+  const { data, onItemClick, selectedItem } = props;
 
   const myChart = useRef<echarts.EChartsType | undefined>();
   const container = useRef<HTMLDivElement | null>(null);
 
+  const { width, height } = useResizeObserver(document.body);
+  useLayoutEffect(() => {
+    if (!myChart.current) return;
+    myChart.current.resize();
+  }, [width, height]);
+
   useEffect(() => {
     if (!container.current) return;
-    myChart.current = echarts.init(container.current);
+    myChart.current = echarts.init(container.current, 'dark');
 
     return () => {
       myChart.current?.dispose();
@@ -207,18 +239,31 @@ const Dendrogram = (props: DendrogramProps) => {
   }, []);
 
   useEffect(() => {
+    if (!myChart.current) return;
+
+    const fn = (params: any) => {
+      onItemClick(params.data.node);
+    };
+
+    myChart.current.on('click', fn);
+
+    return () => {
+      myChart.current?.off('click', fn);
+    };
+  }, [onItemClick]);
+
+  const augmentedData = useMemo(() => augmentData([data], selectedItem), [data, selectedItem]);
+
+  useEffect(() => {
     myChart.current?.setOption({
+      backgroundColor: 'transparent',
       tooltip: {
         trigger: 'item',
         triggerOn: 'mousemove',
         formatter: (params: any) => {
           const { data } = params;
           return `<pre style="font-size: 10px">${JSONBig.stringify(
-            data?.metrics,
-            undefined,
-            2,
-          )} ${JSONBig.stringify(
-            data?.debugInfo,
+            data?.tooltip,
             undefined,
             2,
           )}</pre>`;
@@ -235,20 +280,26 @@ const Dendrogram = (props: DendrogramProps) => {
         {
           type: 'tree',
 
-          data: [data],
+          data: augmentedData,
 
           top: '1%',
           left: '7%',
-          bottom: '1%',
+          bottom: '10%',
           right: '20%',
 
-          symbolSize: 7,
+          symbolSize: (_value: number, params: any) => {
+            // root node
+            if (!params.data.value) return 7;
+
+            return params.data.value * 25;
+          },
 
           label: {
             position: 'left',
             verticalAlign: 'middle',
             align: 'right',
-            fontSize: 9,
+            fontSize: 11,
+            borderColor: 'none',
           },
 
           leaves: {
@@ -263,15 +314,14 @@ const Dendrogram = (props: DendrogramProps) => {
             focus: 'descendant',
           },
 
-          expandAndCollapse: true,
+          expandAndCollapse: false,
           animationDuration: 550,
           animationDurationUpdate: 750,
+          initialTreeDepth: -1, // all nodes expanded
         },
       ],
     });
-  }, [data]);
+  }, [data, augmentedData]);
 
-  // TODO handle resize (use resize observer if possible)
-
-  return <div ref={container} style={{ width: '100%', height: '100%' }} />;
+  return <div className="dendrogram" ref={container} />;
 };
