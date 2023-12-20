@@ -151,7 +151,7 @@ export class WorkbenchView extends React.PureComponent<WorkbenchViewProps, Workb
 
       connectExternalDataDialogOpen: externalDataTabId(props.tabId) && hasSqlTask,
       explainDialogOpen: false,
-      explainAndAnalyseDialogOpen: true,
+      explainAndAnalyseDialogOpen: false,
       historyDialogOpen: false,
       specDialogOpen: false,
       executionSubmitDialogOpen: false,
