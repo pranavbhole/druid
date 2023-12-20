@@ -27,7 +27,6 @@ import org.apache.druid.client.selector.ConnectionCountServerSelectorStrategy;
 import org.apache.druid.client.selector.HighestPriorityTierSelectorStrategy;
 import org.apache.druid.client.selector.QueryableDruidServer;
 import org.apache.druid.client.selector.ServerSelector;
-import org.apache.druid.jackson.DefaultObjectMapper;
 import org.apache.druid.java.util.common.DateTimes;
 import org.apache.druid.java.util.common.Intervals;
 import org.apache.druid.java.util.common.StringUtils;
@@ -44,6 +43,7 @@ import org.apache.druid.query.QueryTimeoutException;
 import org.apache.druid.query.ReflectionQueryToolChestWarehouse;
 import org.apache.druid.query.Result;
 import org.apache.druid.query.timeboundary.TimeBoundaryQuery;
+import org.apache.druid.segment.TestHelper;
 import org.apache.druid.server.coordination.ServerType;
 import org.apache.druid.server.metrics.NoopServiceEmitter;
 import org.apache.druid.timeline.DataSegment;
@@ -100,8 +100,8 @@ public class DirectDruidClientTest
     client = new DirectDruidClient(
         new ReflectionQueryToolChestWarehouse(),
         QueryRunnerTestHelper.NOOP_QUERYWATCHER,
-        new DefaultObjectMapper(),
-        new DefaultObjectMapper(),
+        TestHelper.makeSmileMapper(),
+        TestHelper.makeJsonMapper(),
         httpClient,
         "http",
         hostName,
@@ -166,8 +166,8 @@ public class DirectDruidClientTest
     DirectDruidClient client2 = new DirectDruidClient(
         new ReflectionQueryToolChestWarehouse(),
         QueryRunnerTestHelper.NOOP_QUERYWATCHER,
-        new DefaultObjectMapper(),
-        new DefaultObjectMapper(),
+        TestHelper.makeSmileMapper(),
+        TestHelper.makeJsonMapper(),
         httpClient,
         "http",
         "foo2",
