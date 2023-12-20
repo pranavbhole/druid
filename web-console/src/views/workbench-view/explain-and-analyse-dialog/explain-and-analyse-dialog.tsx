@@ -257,25 +257,25 @@ const Dendrogram = (props: DendrogramProps) => {
   useEffect(() => {
     myChart.current?.setOption({
       backgroundColor: 'transparent',
-      tooltip: {
-        trigger: 'item',
-        triggerOn: 'mousemove',
-        formatter: (params: any) => {
-          const { data } = params;
-          return `<pre style="font-size: 10px">${JSONBig.stringify(
-            data?.tooltip,
-            undefined,
-            2,
-          )}</pre>`;
-        },
-        position: function (pos: any, _params: any, _dom: any, _rect: any, size: any) {
-          // tooltip will be fixed on the right if mouse hovering on the left,
-          // and on the left if hovering on the right.
-          const obj: any = { top: 60 };
-          obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 5;
-          return obj;
-        },
-      },
+      // tooltip: {
+      //   trigger: 'item',
+      //   triggerOn: 'mousemove',
+      //   formatter: (params: any) => {
+      //     const { data } = params;
+      //     return `<pre style="font-size: 10px">${JSONBig.stringify(
+      //       data?.tooltip,
+      //       undefined,
+      //       2,
+      //     )}</pre>`;
+      //   },
+      //   position: function (pos: any, _params: any, _dom: any, _rect: any, size: any) {
+      //     // tooltip will be fixed on the right if mouse hovering on the left,
+      //     // and on the left if hovering on the right.
+      //     const obj: any = { top: 60 };
+      //     obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 5;
+      //     return obj;
+      //   },
+      // },
       series: [
         {
           type: 'tree',
