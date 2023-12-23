@@ -37,10 +37,12 @@ import org.apache.druid.msq.statistics.ClusterByStatisticsCollectorImpl;
 import org.apache.druid.query.lookup.LookupExtractor;
 import org.apache.druid.query.lookup.LookupExtractorFactoryContainer;
 import org.apache.druid.query.lookup.LookupExtractorFactoryContainerProvider;
+import org.apache.druid.query.lookup.LookupReferencesManager;
 import org.apache.druid.segment.realtime.appenderator.AppenderatorsManager;
 import org.apache.druid.segment.realtime.appenderator.UnifiedIndexerAppenderatorsManager;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Class for determining how much JVM heap to allocate to various purposes.
@@ -173,6 +175,7 @@ public class WorkerMemoryParameters
    */
   public static WorkerMemoryParameters createProductionInstanceForController(final Injector injector)
   {
+    awaitForAllLookupsToGetInitialized(injector);
     long totalLookupFootprint = computeTotalLookupFootprint(injector);
     return createInstance(
         Runtime.getRuntime().maxMemory(),
@@ -598,6 +601,22 @@ public class WorkerMemoryParameters
   {
     return (long) ((usuableMemeory / USABLE_MEMORY_FRACTION) + totalLookupFootprint);
   }
+  private static long awaitForAllLookupsToGetInitialized(final Injector injector) {
+  final LookupExtractorFactoryContainerProvider lookupManager =
+      injector.getInstance(LookupExtractorFactoryContainerProvider.class);
+    for (String lookupName : lookupManager.getAllLookupNames()) {
+      Optional<LookupExtractorFactoryContainer> container = lookupManager.get(lookupName);
+      if (container.isPresent()) {
+        try {
+          container.get().getLookupExtractorFactory().awaitInitialization();
+        } catch (Exception e) {
+          // if await is timeout, it does not state that lookup initialization failed.
+          log.warn("Lookup initalization await has timeout! "+e.getMessage());
+        }
+      }
+    }
+
+  }
 
   /**
    * Total estimated lookup footprint. Obtained by calling {@link LookupExtractor#estimateHeapFootprint()} on
@@ -610,7 +629,6 @@ public class WorkerMemoryParameters
     // druid.lookup.enableLookupSyncOnStartup = true.
     final LookupExtractorFactoryContainerProvider lookupManager =
         injector.getInstance(LookupExtractorFactoryContainerProvider.class);
-
     int lookupCount = 0;
     long lookupFootprint = 0;
 
