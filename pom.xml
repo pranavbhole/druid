@@ -79,6 +79,7 @@
         <apache.kafka.version>3.6.1</apache.kafka.version>
         <apache.ranger.version>2.4.0</apache.ranger.version>
         <gson.version>2.10.1</gson.version>
+        <davidmoten.etree.version>0.11</davidmoten.etree.version>
         <scala.library.version>2.13.11</scala.library.version>
         <avatica.version>1.23.0</avatica.version>
         <avro.version>1.11.3</avro.version>
@@ -396,6 +397,11 @@
                 <groupId>com.google.code.gson</groupId>
                 <artifactId>gson</artifactId>
                 <version>${gson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.davidmoten</groupId>
+                <artifactId>rtree</artifactId>
+                <version>${davidmoten.etree.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.zookeeper</groupId>

@@ -49,6 +49,7 @@ import org.apache.druid.guice.security.DruidAuthModule;
 import org.apache.druid.guice.security.EscalatorModule;
 import org.apache.druid.metadata.storage.derby.DerbyMetadataStorageDruidModule;
 import org.apache.druid.rpc.guice.ServiceClientModule;
+import org.apache.druid.segment.geo.GeoSpatialModule;
 import org.apache.druid.segment.writeout.SegmentWriteOutMediumModule;
 import org.apache.druid.server.emitter.EmitterModule;
 import org.apache.druid.server.initialization.AuthenticatorMapperModule;
@@ -133,7 +134,8 @@ public class CoreInjectorBuilder extends DruidInjectorBuilder
         new StartupLoggingModule(),
         new ExternalStorageAccessSecurityModule(),
         new ServiceClientModule(),
-        new StorageConnectorModule()
+        new StorageConnectorModule(),
+        new GeoSpatialModule()
     );
     return this;
   }
