@@ -36,6 +36,7 @@ import org.apache.druid.segment.NestedDataColumnSchema;
 import org.apache.druid.segment.column.ColumnType;
 import org.apache.druid.segment.column.TypeSignature;
 import org.apache.druid.segment.column.ValueType;
+import org.apache.druid.segment.geo.GeoComplexDimensionSchema;
 import org.apache.druid.segment.incremental.IncrementalIndex;
 import org.apache.druid.segment.nested.NestedDataComplexTypeSerde;
 
@@ -52,7 +53,8 @@ import java.util.Objects;
     @JsonSubTypes.Type(name = DimensionSchema.DOUBLE_TYPE_NAME, value = DoubleDimensionSchema.class),
     @JsonSubTypes.Type(name = DimensionSchema.SPATIAL_TYPE_NAME, value = NewSpatialDimensionSchema.class),
     @JsonSubTypes.Type(name = NestedDataComplexTypeSerde.TYPE_NAME, value = NestedDataColumnSchema.class),
-    @JsonSubTypes.Type(name = AutoTypeColumnSchema.TYPE, value = AutoTypeColumnSchema.class)
+    @JsonSubTypes.Type(name = AutoTypeColumnSchema.TYPE, value = AutoTypeColumnSchema.class),
+    @JsonSubTypes.Type(name = GeoComplexDimensionSchema.TYPE, value = GeoComplexDimensionSchema.class)
 })
 public abstract class DimensionSchema
 {

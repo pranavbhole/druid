@@ -1,10 +1,8 @@
 package org.apache.druid.segment.geo;
 
+import com.github.davidmoten.rtree.fbs.generated.PointDouble_;
 import com.github.davidmoten.rtree.geometry.Geometry;
-import com.google.gson.GsonBuilder;
-import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressString;
-import org.apache.commons.math3.geometry.Point;
+import com.github.davidmoten.rtree.geometry.internal.PointDouble;
 import org.apache.druid.java.util.common.IAE;
 import org.apache.druid.java.util.common.guava.Comparators;
 import org.apache.druid.java.util.common.parsers.ParseException;
@@ -23,12 +21,14 @@ public class GeoComplexBlob implements Comparable<GeoComplexBlob>
 
   public static final Strategy STRATEGY = new Strategy();
 
-//  private Geometry geometry;
+  private Geometry geometry;
   private byte[] bytes;
 
   public GeoComplexBlob(byte[] bytes)
   {
     this.bytes = bytes;
+    // TODO
+    this.geometry = PointDouble.create(10, 100);
   }
 
   @Nullable
@@ -42,6 +42,34 @@ public class GeoComplexBlob implements Comparable<GeoComplexBlob>
       return new GeoComplexBlob(bytes);
     }
     return null;
+  }
+
+  @Nullable
+  public static GeoComplexBlob parse(@Nullable Object input, boolean reportParseExceptions)
+  {
+    if (input == null) {
+      return null;
+    }
+    final GeoComplexBlob blob;
+    if (input instanceof GeoComplexBlob) {
+      return (GeoComplexBlob) input;
+    }
+
+    if (input instanceof String) {
+      blob = GeoComplexBlob.ofString((String) input);
+    } else {
+      throw new IAE("Cannot handle [%s]", input.getClass());
+    }
+    // blob should not be null if we get to here, a null is a parse exception
+    if (blob == null && reportParseExceptions) {
+      throw new ParseException(input.toString(), "Cannot parse [%s] as an IP address", input);
+    }
+    return blob;
+  }
+
+  private static GeoComplexBlob ofString(String input)
+  {
+    return new GeoComplexBlob("[10, 2]".getBytes(StandardCharsets.UTF_8));
   }
 
   public byte[] getBytes()
@@ -78,6 +106,11 @@ public class GeoComplexBlob implements Comparable<GeoComplexBlob>
   public String toString()
   {
     return "geoComplex";
+  }
+
+  public Geometry getGeometry()
+  {
+    return geometry;
   }
 
   public static class Strategy implements ObjectStrategy<GeoComplexBlob>

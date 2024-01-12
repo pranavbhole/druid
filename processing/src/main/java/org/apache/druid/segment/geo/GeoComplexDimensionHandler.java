@@ -2,6 +2,7 @@ package org.apache.druid.segment.geo;
 
 import org.apache.druid.data.input.impl.DimensionSchema;
 import org.apache.druid.java.util.common.io.Closer;
+import org.apache.druid.segment.AutoTypeColumnMerger;
 import org.apache.druid.segment.ColumnValueSelector;
 import org.apache.druid.segment.DimensionHandler;
 import org.apache.druid.segment.DimensionIndexer;
@@ -17,10 +18,8 @@ import java.util.Comparator;
 public class GeoComplexDimensionHandler implements DimensionHandler<GeoComplexBlob, GeoComplexBlob, GeoComplexBlob>
 {
   private final String name;
-  //private final GeoComplexDimensionSchema.GeometryType geometryType;
   public GeoComplexDimensionHandler(String name) {
     this.name = name;
-    //this.geometryType = geometryType;
   }
   @Override
   public String getDimensionName()
@@ -31,13 +30,14 @@ public class GeoComplexDimensionHandler implements DimensionHandler<GeoComplexBl
   @Override
   public DimensionSchema getDimensionSchema(ColumnCapabilities capabilities)
   {
-    return new GeoComplexDimensionSchema(name, GeoComplexDimensionSchema.GeometryType.POINT, capabilities.hasBitmapIndexes());
+    // TODO: get GeometryType dynamically
+    return new GeoComplexDimensionSchema(name, "point");
   }
 
   @Override
   public DimensionIndexer<GeoComplexBlob, GeoComplexBlob, GeoComplexBlob> makeIndexer(boolean useMaxMemoryEstimates)
   {
-    return null;
+    return new GeoComplexRTreeColumnIndexer(3, 6);
   }
 
   @Override
@@ -49,7 +49,7 @@ public class GeoComplexDimensionHandler implements DimensionHandler<GeoComplexBl
       Closer closer
   )
   {
-    return null;
+    return new RTreeSpatialColumnMerger();
   }
 
   @Override
@@ -69,4 +69,5 @@ public class GeoComplexDimensionHandler implements DimensionHandler<GeoComplexBl
   {
     return null;
   }
+
 }

@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 
 public class GeoComplexTypeSerde extends ComplexMetricSerde
 {
-  public static String GEO_COMPLEX_TYPE = "geo";
+  public static final String GEO_COMPLEX_TYPE = "geo";
   public static final GeoComplexTypeSerde INSTANCE = new GeoComplexTypeSerde();
   @Override
   public String getTypeName()

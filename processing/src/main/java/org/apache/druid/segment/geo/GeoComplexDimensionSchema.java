@@ -1,6 +1,7 @@
 package org.apache.druid.segment.geo;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.druid.data.input.impl.DimensionSchema;
 import org.apache.druid.java.util.common.StringUtils;
@@ -8,11 +9,13 @@ import org.apache.druid.segment.column.ColumnType;
 
 public class GeoComplexDimensionSchema extends DimensionSchema
 {
+  public static final String TYPE= GeoComplexTypeSerde.GEO_COMPLEX_TYPE;
   private GeometryType geometryType;
-  protected GeoComplexDimensionSchema(String name, GeometryType geometryType, boolean createBitmapIndex)
+  @JsonCreator
+  public GeoComplexDimensionSchema(@JsonProperty("name") String name, @JsonProperty("geometryType") String geometryType)
   {
-    super(name, null, createBitmapIndex);
-    this.geometryType = geometryType == null ? GeometryType.ofDefault() : geometryType;
+    super(name, null, false);
+    this.geometryType = geometryType == null ? GeometryType.ofDefault() : GeometryType.fromString(geometryType);
   }
 
   @Override
@@ -26,6 +29,13 @@ public class GeoComplexDimensionSchema extends DimensionSchema
   {
     return GeoSpatialModule.GEO_COMPLEX_TYPE;
   }
+
+  @JsonProperty
+  public GeometryType getGeometryType()
+  {
+    return geometryType;
+  }
+
   public enum GeometryType {
     POINT,
     LINE,
