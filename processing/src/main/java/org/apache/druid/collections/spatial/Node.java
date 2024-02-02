@@ -33,8 +33,8 @@ import java.util.List;
  */
 public class Node
 {
-  private final float[] minCoordinates;
-  private final float[] maxCoordinates;
+  private final double[] minCoordinates;
+  private final double[] maxCoordinates;
 
   private final List<Node> children;
   private final boolean isLeaf;
@@ -42,7 +42,7 @@ public class Node
 
   private Node parent;
 
-  public Node(float[] minCoordinates, float[] maxCoordinates, boolean isLeaf, BitmapFactory bitmapFactory)
+  public Node(double[] minCoordinates, double[] maxCoordinates, boolean isLeaf, BitmapFactory bitmapFactory)
   {
     this(
         minCoordinates,
@@ -68,8 +68,8 @@ public class Node
    * a collection of children Nodes.
    */
   public Node(
-      float[] minCoordinates,
-      float[] maxCoordinates,
+      double[] minCoordinates,
+      double[] maxCoordinates,
       @Nullable Node child,
       boolean isLeaf,
       Node parent,
@@ -95,12 +95,12 @@ public class Node
     return minCoordinates.length;
   }
 
-  public float[] getMinCoordinates()
+  public double[] getMinCoordinates()
   {
     return minCoordinates;
   }
 
-  public float[] getMaxCoordinates()
+  public double[] getMaxCoordinates()
   {
     return maxCoordinates;
   }
@@ -136,7 +136,7 @@ public class Node
     return calculateArea();
   }
 
-  public boolean contains(float[] coords)
+  public boolean contains(double[] coords)
   {
     Preconditions.checkArgument(getNumDims() == coords.length);
 
@@ -151,10 +151,10 @@ public class Node
   public boolean enclose()
   {
     boolean retVal = false;
-    float[] minCoords = new float[getNumDims()];
-    Arrays.fill(minCoords, Float.POSITIVE_INFINITY);
-    float[] maxCoords = new float[getNumDims()];
-    Arrays.fill(maxCoords, Float.NEGATIVE_INFINITY);
+    double[] minCoords = new double[getNumDims()];
+    Arrays.fill(minCoords, Double.POSITIVE_INFINITY);
+    double[] maxCoords = new double[getNumDims()];
+    Arrays.fill(maxCoords, Double.NEGATIVE_INFINITY);
 
     for (Node child : getChildren()) {
       for (int i = 0; i < getNumDims(); i++) {
@@ -194,7 +194,7 @@ public class Node
   public int getSizeInBytes()
   {
     return ImmutableNode.HEADER_NUM_BYTES
-           + 2 * getNumDims() * Float.BYTES
+           + 2 * getNumDims() * Double.BYTES
            + Integer.BYTES // size of the set
            + bitmap.getSizeInBytes()
            + getChildren().size() * Integer.BYTES;
@@ -204,11 +204,11 @@ public class Node
   {
     buffer.position(position);
     buffer.putShort((short) (((isLeaf ? 0x1 : 0x0) << 15) | getChildren().size()));
-    for (float v : getMinCoordinates()) {
-      buffer.putFloat(v);
+    for (double v : getMinCoordinates()) {
+      buffer.putDouble(v);
     }
-    for (float v : getMaxCoordinates()) {
-      buffer.putFloat(v);
+    for (double v : getMaxCoordinates()) {
+      buffer.putDouble(v);
     }
     byte[] bytes = bitmap.toBytes();
     buffer.putInt(bytes.length);

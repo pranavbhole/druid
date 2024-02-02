@@ -178,9 +178,9 @@ public class StringDimensionMergerV9 extends DictionaryEncodedColumnMerger<Strin
         String dimVal = dictionaryWriter.get(dictId);
         if (dimVal != null) {
           List<String> stringCoords = Lists.newArrayList(SPLITTER.split(dimVal));
-          float[] coords = new float[stringCoords.size()];
+          double[] coords = new double[stringCoords.size()];
           for (int j = 0; j < coords.length; j++) {
-            coords[j] = Float.valueOf(stringCoords.get(j));
+            coords[j] = Double.valueOf(stringCoords.get(j));
           }
           tree.insert(coords, mergedIndexes);
         }

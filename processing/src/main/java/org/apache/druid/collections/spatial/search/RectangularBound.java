@@ -37,15 +37,15 @@ public class RectangularBound implements Bound
 {
   private static final byte CACHE_TYPE_ID = 0x0;
 
-  private final float[] minCoords;
-  private final float[] maxCoords;
+  private final double[] minCoords;
+  private final double[] maxCoords;
   private final int limit;
   private final int numDims;
 
   @JsonCreator
   public RectangularBound(
-      @JsonProperty("minCoords") float[] minCoords,
-      @JsonProperty("maxCoords") float[] maxCoords,
+      @JsonProperty("minCoords") double[] minCoords,
+      @JsonProperty("maxCoords") double[] maxCoords,
       @JsonProperty("limit") int limit
   )
   {
@@ -59,21 +59,21 @@ public class RectangularBound implements Bound
   }
 
   public RectangularBound(
-      float[] minCoords,
-      float[] maxCoords
+      double[] minCoords,
+      double[] maxCoords
   )
   {
     this(minCoords, maxCoords, 0);
   }
 
   @JsonProperty
-  public float[] getMinCoords()
+  public double[] getMinCoords()
   {
     return minCoords;
   }
 
   @JsonProperty
-  public float[] getMaxCoords()
+  public double[] getMaxCoords()
   {
     return maxCoords;
   }
@@ -94,8 +94,8 @@ public class RectangularBound implements Bound
   @Override
   public boolean overlaps(ImmutableNode node)
   {
-    final float[] nodeMinCoords = node.getMinCoordinates();
-    final float[] nodeMaxCoords = node.getMaxCoordinates();
+    final double[] nodeMinCoords = node.getMinCoordinates();
+    final double[] nodeMaxCoords = node.getMaxCoordinates();
 
     for (int i = 0; i < numDims; i++) {
       if (nodeMaxCoords[i] < minCoords[i] || nodeMinCoords[i] > maxCoords[i]) {
@@ -107,7 +107,7 @@ public class RectangularBound implements Bound
   }
 
   @Override
-  public boolean contains(float[] coords)
+  public boolean contains(double[] coords)
   {
     for (int i = 0; i < numDims; i++) {
       if (coords[i] < minCoords[i] || coords[i] > maxCoords[i]) {
@@ -137,12 +137,12 @@ public class RectangularBound implements Bound
   @Override
   public byte[] getCacheKey()
   {
-    ByteBuffer minCoordsBuffer = ByteBuffer.allocate(minCoords.length * Float.BYTES);
-    minCoordsBuffer.asFloatBuffer().put(minCoords);
+    ByteBuffer minCoordsBuffer = ByteBuffer.allocate(minCoords.length * Double.BYTES);
+    minCoordsBuffer.asDoubleBuffer().put(minCoords);
     final byte[] minCoordsCacheKey = minCoordsBuffer.array();
 
-    ByteBuffer maxCoordsBuffer = ByteBuffer.allocate(maxCoords.length * Float.BYTES);
-    maxCoordsBuffer.asFloatBuffer().put(maxCoords);
+    ByteBuffer maxCoordsBuffer = ByteBuffer.allocate(maxCoords.length * Double.BYTES);
+    maxCoordsBuffer.asDoubleBuffer().put(maxCoords);
     final byte[] maxCoordsCacheKey = maxCoordsBuffer.array();
 
     final ByteBuffer cacheKey = ByteBuffer

@@ -49,7 +49,7 @@ public class ImmutablePoint extends ImmutableNode
     );
   }
 
-  public float[] getCoords()
+  public double[] getCoords()
   {
     return super.getMinCoordinates();
   }

@@ -73,13 +73,13 @@ public class RTree
    * @param coords - the coordinates of the entry
    * @param entry  - the integer to insert
    */
-  public void insert(float[] coords, int entry)
+  public void insert(double[] coords, int entry)
   {
     Preconditions.checkArgument(coords.length == numDims);
     insertInner(new Point(coords, entry, bitmapFactory));
   }
 
-  public void insert(float[] coords, MutableBitmap entry)
+  public void insert(double[] coords, MutableBitmap entry)
   {
     Preconditions.checkArgument(coords.length == numDims);
     insertInner(new Point(coords, entry));
@@ -102,10 +102,10 @@ public class RTree
 
   private Node buildRoot(boolean isLeaf)
   {
-    float[] initMinCoords = new float[numDims];
-    float[] initMaxCoords = new float[numDims];
-    Arrays.fill(initMinCoords, Float.NEGATIVE_INFINITY);
-    Arrays.fill(initMaxCoords, Float.POSITIVE_INFINITY);
+    double[] initMinCoords = new double[numDims];
+    double[] initMaxCoords = new double[numDims];
+    Arrays.fill(initMinCoords, Double.NEGATIVE_INFINITY);
+    Arrays.fill(initMaxCoords, Double.POSITIVE_INFINITY);
 
     return new Node(initMinCoords, initMaxCoords, isLeaf, bitmapFactory);
   }

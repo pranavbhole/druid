@@ -68,12 +68,12 @@ public class ImmutableNode
     short header = data.getShort(initialOffset + offsetFromInitial);
     this.isLeaf = (header & 0x8000) != 0;
     this.numChildren = (short) (header & 0x7FFF);
-    final int sizePosition = initialOffset + offsetFromInitial + HEADER_NUM_BYTES + 2 * numDims * Float.BYTES;
+    final int sizePosition = initialOffset + offsetFromInitial + HEADER_NUM_BYTES + 2 * numDims * Double.BYTES;
     int bitmapSize = data.getInt(sizePosition);
     this.childrenOffset = initialOffset
                           + offsetFromInitial
                           + HEADER_NUM_BYTES
-                          + 2 * numDims * Float.BYTES
+                          + 2 * numDims * Double.BYTES
                           + Integer.BYTES
                           + bitmapSize;
 
@@ -96,12 +96,12 @@ public class ImmutableNode
     this.offsetFromInitial = offsetFromInitial;
     this.numChildren = numChildren;
     this.isLeaf = leaf;
-    final int sizePosition = initialOffset + offsetFromInitial + HEADER_NUM_BYTES + 2 * numDims * Float.BYTES;
+    final int sizePosition = initialOffset + offsetFromInitial + HEADER_NUM_BYTES + 2 * numDims * Double.BYTES;
     int bitmapSize = data.getInt(sizePosition);
     this.childrenOffset = initialOffset
                           + offsetFromInitial
                           + HEADER_NUM_BYTES
-                          + 2 * numDims * Float.BYTES
+                          + 2 * numDims * Double.BYTES
                           + Integer.BYTES
                           + bitmapSize;
 
@@ -133,19 +133,19 @@ public class ImmutableNode
     return isLeaf;
   }
 
-  public float[] getMinCoordinates()
+  public double[] getMinCoordinates()
   {
     return getCoords(initialOffset + offsetFromInitial + HEADER_NUM_BYTES);
   }
 
-  public float[] getMaxCoordinates()
+  public double[] getMaxCoordinates()
   {
-    return getCoords(initialOffset + offsetFromInitial + HEADER_NUM_BYTES + numDims * Float.BYTES);
+    return getCoords(initialOffset + offsetFromInitial + HEADER_NUM_BYTES + numDims * Double.BYTES);
   }
 
   public ImmutableBitmap getImmutableBitmap()
   {
-    final int sizePosition = initialOffset + offsetFromInitial + HEADER_NUM_BYTES + 2 * numDims * Float.BYTES;
+    final int sizePosition = initialOffset + offsetFromInitial + HEADER_NUM_BYTES + 2 * numDims * Double.BYTES;
     int numBytes = data.getInt(sizePosition);
     data.position(sizePosition + Integer.BYTES);
     ByteBuffer tmpBuffer = data.slice();
@@ -207,13 +207,13 @@ public class ImmutableNode
     return data;
   }
 
-  private float[] getCoords(int offset)
+  private double[] getCoords(int offset)
   {
-    final float[] retVal = new float[numDims];
+    final double[] retVal = new double[numDims];
 
     final ByteBuffer readOnlyBuffer = data.asReadOnlyBuffer();
     readOnlyBuffer.position(offset);
-    readOnlyBuffer.asFloatBuffer().get(retVal);
+    readOnlyBuffer.asDoubleBuffer().get(retVal);
 
     return retVal;
   }

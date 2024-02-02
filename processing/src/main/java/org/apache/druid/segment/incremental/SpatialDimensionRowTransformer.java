@@ -189,7 +189,7 @@ public class SpatialDimensionRowTransformer implements Function<InputRow, InputR
       return false;
     }
     for (String dimVal : dimVals) {
-      if (tryParseFloat(dimVal) == null) {
+      if (tryParseDouble(dimVal) == null) {
         return false;
       }
     }
@@ -203,7 +203,7 @@ public class SpatialDimensionRowTransformer implements Function<InputRow, InputR
     }
     Iterable<String> dimVals = SPLITTER.split(dimVal);
     for (String val : dimVals) {
-      if (tryParseFloat(val) == null) {
+      if (tryParseDouble(val) == null) {
         return false;
       }
     }
@@ -211,10 +211,10 @@ public class SpatialDimensionRowTransformer implements Function<InputRow, InputR
   }
 
   @Nullable
-  private static Float tryParseFloat(String val)
+  private static Double tryParseDouble(String val)
   {
     try {
-      return Float.parseFloat(val);
+      return Double.parseDouble(val);
     }
     catch (NullPointerException | NumberFormatException e) {
       return null;
@@ -229,21 +229,21 @@ public class SpatialDimensionRowTransformer implements Function<InputRow, InputR
    * @return decoded coordinate, or null if it could not be decoded
    */
   @Nullable
-  public static float[] decode(final String encodedCoordinate)
+  public static double[] decode(final String encodedCoordinate)
   {
     if (encodedCoordinate == null) {
       return null;
     }
 
     final ImmutableList<String> parts = ImmutableList.copyOf(SPLITTER.split(encodedCoordinate));
-    final float[] coordinate = new float[parts.size()];
+    final double[] coordinate = new double[parts.size()];
 
     for (int i = 0; i < coordinate.length; i++) {
-      final Float floatPart = tryParseFloat(parts.get(i));
-      if (floatPart == null) {
+      final Double aDoublePart = tryParseDouble(parts.get(i));
+      if (aDoublePart == null) {
         return null;
       } else {
-        coordinate[i] = floatPart;
+        coordinate[i] = aDoublePart;
       }
     }
 
