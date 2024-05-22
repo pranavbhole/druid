@@ -41,6 +41,7 @@ import org.apache.druid.segment.Segment;
 import org.apache.druid.segment.column.ColumnType;
 import org.apache.druid.segment.column.RowSignature;
 import org.apache.druid.segment.column.ValueType;
+import org.apache.druid.segment.transform.TransformSpec;
 import org.apache.druid.segment.virtual.ExpressionVirtualColumn;
 import org.apache.druid.segment.virtual.NestedFieldVirtualColumn;
 import org.apache.druid.testing.InitializedNullHandlingTest;
@@ -618,6 +619,47 @@ public class NestedDataGroupByQueryTest extends InitializedNullHandlingTest
 
     runResults(
         groupQuery,
+        ImmutableList.of()
+    );
+  }
+  @Test
+  public void testNestedDataWithIncrementalIndexSchemaDiscovery() throws Exception
+  {
+    GroupByQuery groupQuery = GroupByQuery.builder()
+                                          .setDataSource("test_datasource")
+                                          .setGranularity(Granularities.ALL)
+                                          .setInterval(Intervals.ETERNITY)
+                                          .setDimensions(DefaultDimensionSpec.of("str"))
+                                          .setAggregatorSpecs(new LongSumAggregatorFactory("long", "long"))
+                                          .setContext(getContext())
+                                          .addOrderByColumn("str")
+                                          .setLimit(100)
+                                          .build();
+
+    System.out.println(groupQuery);
+
+    final List<Segment> segments = ImmutableList.of(
+        NestedDataTestUtils.createIncrementalIndex(
+            tempFolder,
+            NestedDataTestUtils.TYPES_DATA_FILE,
+            NestedDataTestUtils.DEFAULT_JSON_INPUT_FORMAT,
+            NestedDataTestUtils.TIMESTAMP_SPEC,
+            NestedDataTestUtils.AUTO_DISCOVERY,
+            TransformSpec.NONE,
+            NestedDataTestUtils.COUNT,
+            Granularities.DAY,
+            true
+        )
+    );
+
+
+    Supplier<List<ResultRow>> runner =
+        () -> helper.runQueryOnSegmentsObjs(segments, groupQuery).toList();
+
+    List<ResultRow> results = runner.get();
+    verifyResults(
+        groupQuery.getResultRowSignature(),
+        results,
         ImmutableList.of()
     );
   }

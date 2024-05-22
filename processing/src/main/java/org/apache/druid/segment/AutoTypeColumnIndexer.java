@@ -39,7 +39,9 @@ import org.apache.druid.segment.column.ColumnCapabilitiesImpl;
 import org.apache.druid.segment.column.ColumnFormat;
 import org.apache.druid.segment.column.ColumnType;
 import org.apache.druid.segment.column.ColumnTypeFactory;
+import org.apache.druid.segment.data.ArrayBasedIndexedInts;
 import org.apache.druid.segment.data.CloseableIndexed;
+import org.apache.druid.segment.data.IndexedInts;
 import org.apache.druid.segment.incremental.IncrementalIndex;
 import org.apache.druid.segment.incremental.IncrementalIndexRowHolder;
 import org.apache.druid.segment.nested.FieldTypeInfo;
@@ -307,8 +309,36 @@ public class AutoTypeColumnIndexer implements DimensionIndexer<StructuredData, S
         );
       }
       if (spec.getExtractionFn() == null) {
-        return new BaseSingleValueDimensionSelector()
+        class AutoTypeBaseSingleValueDimensionSelector extends BaseSingleValueDimensionSelector
         {
+          IndexedInts indexedInts = new ArrayBasedIndexedInts();
+          @Override
+          public IndexedInts getRow()
+          {
+            // todo
+            return indexedInts;
+          }
+
+          @Override
+          public int getValueCardinality()
+          {
+            //todo
+           return globalDictionary.getSortedCollector().getSortedStrings().size();
+          }
+
+          @Override
+          public String lookupName(int id)
+          {
+            //todo
+            return globalDictionary.getSortedCollector().getSortedStrings().get(id);
+          }
+
+          @Override
+          public boolean nameLookupPossibleInAdvance()
+          {
+            return true;
+          }
+
           @Nullable
           @Override
           protected String getValue()
@@ -321,7 +351,9 @@ public class AutoTypeColumnIndexer implements DimensionIndexer<StructuredData, S
           {
 
           }
-        };
+
+        }
+        return new AutoTypeBaseSingleValueDimensionSelector();
       }
       return new BaseSingleValueDimensionSelector()
       {
